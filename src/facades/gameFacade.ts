@@ -107,7 +107,7 @@ export default class GameFacade {
     try {
       const found = await positionCollection.find(
         {
-          //Figure out what to add here
+          //Figure out what to add here.Hint --> Take a look at the $near operator
         }
       )
       return found.toArray();
