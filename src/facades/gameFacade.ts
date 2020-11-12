@@ -107,18 +107,7 @@ export default class GameFacade {
     try {
       const found = await positionCollection.find(
         {
-          userName: { $ne: clientUserName },
-          location:
-          {
-            $near:
-            {
-              $geometry: {
-                type: "Point",
-                coordinates: [point.coordinates[0], point.coordinates[1]]
-              },
-              $maxDistance: distance
-            }
-          }
+          //Figure out what to add here
         }
       )
       return found.toArray();
