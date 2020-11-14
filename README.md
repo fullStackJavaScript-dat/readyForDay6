@@ -8,7 +8,8 @@ PORT=5555
 
 DEBUG=game-project,facade-no-db,facade-with-db,facade-with-db:test,user-endpoint,user-endpoint-test,db-setup
 
-SKIP_AUTHENTICATION=true
+# Comment out, or remove, this line to get authentication
+# SKIP_AUTHENTICATION=xxxx
 
 MOCHA_TIMEOUT=5000
 
