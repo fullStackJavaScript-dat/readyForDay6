@@ -1,13 +1,16 @@
 import * as mongo from "mongodb"
-const MongoClient = mongo.MongoClient;
 import GameFacade from '../src/facades/gameFacade';
 import chai, { expect } from "chai";
 import chaiAsPromised from 'chai-as-promised'
 import { bryptAsync } from "../src/utils/bcrypt-async-helper"
 import { positionCreator, getLatitudeOutside, getLatitudeInside } from "../src/utils/geoUtils"
 import { USER_COLLECTION_NAME, POSITION_COLLECTION_NAME, POST_COLLECTION_NAME } from "../src/config/collectionNames"
-import { getConnectedClient, closeConnection } from "../src/config/setupDB"
 import { ApiError } from '../src/errors/apiError';
+import getDBConnection from "../src/config/setupDB";
+import { MongoMemoryServer } from "mongodb-memory-server"
+const testConnection = getDBConnection({
+  testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } })
+})
 chai.use(chaiAsPromised);
 
 let userCollection: mongo.Collection | null;
@@ -20,12 +23,8 @@ const DISTANCE_TO_SEARCH = 100
 describe("########## Verify the Game Facade ##########", () => {
 
   before(async function () {
-    this.timeout(Number(process.env["MOCHA_TIMEOUT"]));
-    client = await getConnectedClient();
-    process.env["DB_NAME"] = "semester_case_test"
-    await GameFacade.initDB(client)
-
-    const db = await client.db(process.env["DB_NAME"]);
+    const db = await testConnection.getDB();
+    await GameFacade.initDB(db)
 
     userCollection = db.collection(USER_COLLECTION_NAME);
     positionCollection = db.collection(POSITION_COLLECTION_NAME)

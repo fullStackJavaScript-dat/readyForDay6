@@ -3,16 +3,22 @@ require('dotenv').config({ path: path.join(process.cwd(), '.env') })
 import { expect } from "chai";
 import { Server } from "http";
 import fetch from "node-fetch";
-import { MongoClient } from "mongodb";
 import { bryptAsync } from "../src/utils/bcrypt-async-helper"
-import { getConnectedClient } from "../src/config/setupDB"
-
 import { positionCreator, getLatitudeInside, getLatitudeOutside } from "../src/utils/geoUtils"
 import { USER_COLLECTION_NAME, POSITION_COLLECTION_NAME } from "../src/config/collectionNames"
+import app from "../src/app"
+import http from "http"
+import startServer from "../src/utils/httpUtils"
+
+import { MongoMemoryServer } from "mongodb-memory-server"
+import getDB from "../src/config/setupDB";
+const dbConnection = getDB({
+  testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } }),
+  app: app
+})
 
 let server: Server;
-const TEST_PORT = "7777"
-let client: MongoClient;
+const TEST_PORT = "7778"
 const DISTANCE_TO_SEARCH = 100
 
 
@@ -21,23 +27,21 @@ describe("Verify /gameapi/getPostIfReached", () => {
   let usersCollection: any;
   let positionsCollection: any;
 
-  //IMPORTANT --> this does now work with Mocha for ARROW-functions
   before(async function () {
-
-    //@ts-ignore
-    this.timeout(Number(process.env["MOCHA_TIMEOUT"]));
-
-    process.env["PORT"] = TEST_PORT;
     process.env["SKIP_AUTHENTICATION"] = "1";
-    process.env["DB_NAME"] = "semester_case_test"
-
-    const client = await getConnectedClient();
-    const db = client.db(process.env.DB_NAME)
+    process.env["PORT"] = TEST_PORT;
+    const db = await dbConnection.getDB()
     usersCollection = db.collection(USER_COLLECTION_NAME)
     positionsCollection = db.collection(POSITION_COLLECTION_NAME)
-
-    server = require("../src/app").server;
+   
+    server = http.createServer(app);
+    await startServer(process.env.PORT,app);
+   
     URL = `http://localhost:${process.env.PORT}`;
+  })
+
+  after(async function () {
+    server.close();
   })
 
   beforeEach(async () => {
@@ -62,7 +66,9 @@ describe("Verify /gameapi/getPostIfReached", () => {
     const locations = await positionsCollection.insertMany(positions)
   })
 
-  after(async () => { })
+  it("Should return true", async function () {
+    expect(true).to.be.true
+  })
 
   xit("Should find team2, since inside range", async function () {
     const newPosition = { "userName": "t1", "password": "secret", "lat": 55.77, "lon": 12.48, "distance": DISTANCE_TO_SEARCH }

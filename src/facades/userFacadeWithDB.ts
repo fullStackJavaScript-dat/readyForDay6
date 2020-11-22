@@ -4,42 +4,23 @@ const debug = require("debug")("facade-with-db");
 import IGameUser from '../interfaces/GameUser';
 import { bryptAsync, bryptCheckAsync } from "../utils/bcrypt-async-helper"
 import * as mongo from "mongodb"
-import { getConnectedClient, closeConnection } from "../config/setupDB"
 import { ApiError } from "../errors/apiError"
-
+import setupDB from "../config/setupDB"
+const connection = setupDB();
 let userCollection: mongo.Collection;
 
 export default class UserFacade {
 
-  static dbIsReady = false;
-
-  /*
-  This method MUST be called before using the facade
-  */
-  static async initDB(client: mongo.MongoClient) {
-
-    const dbName = process.env.DB_NAME;
-    //debug(`Database ${dbName} about to be setup: ${client}`)
-    if (!dbName) {
-      throw new Error("Database name not provided")
-    }
-    try {
-      userCollection = await client.db(dbName).collection("users");
-      debug(`userCollection initialized on database '${dbName}'`)
-
-    } catch (err) {
-      debug("Could not create connection", err)
-    }
-    UserFacade.dbIsReady = true
+  //This method MUST be called before using the facade
+  static async initDB(db: mongo.Db) {
+    userCollection = await db.collection("users")
   }
 
-
   static isDbReady() {
-    if (!UserFacade.dbIsReady) {
+    if (!userCollection) {
       throw new Error(`######## initDB MUST be called BEFORE using this facade ########`)
     }
   }
-
 
   static async addUser(user: IGameUser): Promise<string> {
     UserFacade.isDbReady()
@@ -57,13 +38,12 @@ export default class UserFacade {
     }
     throw new ApiError("User could not be deleted", 400);
   }
-  //static async getAllUsers(): Promise<Array<IGameUser>> {
+
   static async getAllUsers(proj?: object): Promise<Array<any>> {
     UserFacade.isDbReady()
     const users = await userCollection.find(
       {},
       { projection: proj }).toArray()
-
     return users;
   }
 
@@ -88,9 +68,9 @@ export default class UserFacade {
 }
 
 async function test() {
-  const client = await getConnectedClient();
-  //process.env["DB_NAME"] = "semester_case_test"
-  await UserFacade.initDB(client);
+
+  const db = await connection.getDB()
+  await UserFacade.initDB(db);
 
   await userCollection.deleteMany({})
   await UserFacade.addUser({ name: "kim-admin", userName: "kim@b.dk", password: "secret", role: "admin" })
@@ -136,7 +116,7 @@ async function test() {
   // } catch (err) {
   //     debug("hould get here with failded 2", err)
   // }
-  // await closeConnection()
+  // await connection.close()
   //debug("Done, and connection was closed")
 
 }

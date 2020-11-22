@@ -1,43 +1,44 @@
 import path from "path";
 require('dotenv').config({ path: path.join(process.cwd(), '.env') })
-import { expect } from "chai";
-import { Server } from "http";
+import { expect } from "chai"
+import { Server } from "http"
+import http from "http"
+import app from "../src/app"
 const debug = require("debug")("user-endpoint-test");
 import fetch from "node-fetch";
-import { getConnectedClient } from "../src/config/setupDB"
 import { bryptAsync } from "../src/utils/bcrypt-async-helper"
-import UserFacade from '../src/facades/userFacadeWithDB';
-
+import startServer from "../src/utils/httpUtils"
+import { MongoMemoryServer } from "mongodb-memory-server"
+import getTestDb from "../src/config/setupDB";
+const testConnection = getTestDb({
+  testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } }),
+  app: app
+})
 
 let server: Server;
-const TEST_PORT = "7777"
 
 describe("####### Verify the User Endpoints (/api/users) ##########", function () {
-  //Change mocha's default timeout, since we are using a "slow" remote database for testing
-  this.timeout(Number(process.env["MOCHA_TIMEOUT"]));
   let URL: string;
 
   before(async function () {
-    process.env["PORT"] = TEST_PORT;
+    process.env["PORT"] = "7777"
     process.env["SKIP_AUTHENTICATION"] = "1";
-    process.env["DB_NAME"] = "semester_case_test"
+ 
+    server = http.createServer(app);
+    await startServer(process.env.PORT, app);
 
-    const client = await getConnectedClient();
-    const db = client.db(process.env.DB_NAME)
+    const db = await testConnection.getDB();
     usersCollection = db.collection("users")
-
-    server = require("../src/app").server;
     URL = `http://localhost:${process.env.PORT}`;
-    // done();
+  })
+
+  after(async function () {
+    server.close();
   })
 
   let usersCollection: any;
-  beforeEach(async function () {
-    //Observe, no use of facade, but operates directly on connection
-    // const client = await getConnectedClient("From UserEndpoint Test");
-    // const db = client.db(process.env.DB_NAME)
 
-    // usersCollection = db.collection("users")
+  beforeEach(async function () {
     await usersCollection.deleteMany({})
     const secretHashed = await bryptAsync("secret");
     const status = await usersCollection.insertMany([
@@ -45,10 +46,6 @@ describe("####### Verify the User Endpoints (/api/users) ##########", function (
       { name: "Donald Duck", userName: "dd@b.dk", password: secretHashed, role: "user" },
       { name: "admin", userName: "admin@a.dk", password: secretHashed, role: "admin" }
     ])
-  })
-
-  after(async () => {
-    // DONT CALL THIS. Will make additonal tests fail -->server.close();
   })
 
   it("Should get the message Hello", async () => {

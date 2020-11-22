@@ -3,17 +3,16 @@ require('dotenv').config({ path: path.join(process.cwd(), '.env') })
 import * as mongo from "mongodb";
 import { bryptAsync } from "./bcrypt-async-helper"
 const debug = require("debug")("test-users")
-const MongoClient = mongo.MongoClient;
 import { USER_COLLECTION_NAME } from "../config/collectionNames"
-import { getConnectedClient, closeConnection } from "../config/setupDB"
+import setupDB from "../config/setupDB"
+const connection = setupDB();
 
 
 
-(async function makeTestData() {
+async function makeTestData() {
   try {
-    const client = await getConnectedClient();
-    const db = client.db(process.env.DB_NAME)
 
+    const db = await connection.getDB()
     const usersCollection = db.collection(USER_COLLECTION_NAME)
     await usersCollection.deleteMany({})
     const secretHashed = await bryptAsync("secret");
@@ -28,6 +27,7 @@ import { getConnectedClient, closeConnection } from "../config/setupDB"
   } catch (err) {
     console.error(err)
   } finally {
-    closeConnection()
+    connection.stop()
   }
-})()
+}
+//makeTestData()

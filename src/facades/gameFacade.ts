@@ -24,24 +24,11 @@ export default class GameFacade {
     }
   }
 
-  static async initDB(client: mongo.MongoClient) {
-
-    const dbName = process.env.DB_NAME;
-    debug(`Database ${dbName} about to be setup: ${client}`)
-    if (!dbName) {
-      throw new Error("Database name not provided")
-    }
-
+  static async initDB(db: mongo.Db) {
     //Setup the Facade
-    await UserFacade.initDB(client);
+    // await UserFacade.initDB(client);
 
-    try {
-      positionCollection = await client.db(dbName).collection(POSITION_COLLECTION_NAME);
-      debug(`positionCollection initialized on database '${dbName}'`)
-
-    } catch (err) {
-      console.error("Could not create connection", err)
-    }
+    positionCollection = db.collection(POSITION_COLLECTION_NAME);     
 
     //TODO
     //1) Create expiresAfterSeconds index on lastUpdated

@@ -43,11 +43,8 @@ app.use(function (err: any, req: any, res: any, next: Function) {
   next(err)
 })
 
-const PORT = process.env.PORT || 3333;
-const server = app.listen(PORT)
+//Server is now started in bin/www.js
+export default app
 
-
-console.log(`Server started, listening on port: ${PORT}`)
-module.exports.server = server;
 
 

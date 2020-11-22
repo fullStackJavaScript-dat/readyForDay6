@@ -1,28 +1,27 @@
 import * as mongo from "mongodb"
-const MongoClient = mongo.MongoClient;
-import { getConnectedClient, closeConnection } from "../src/config/setupDB"
 const debug = require("debug")("facade-with-db:test");
 import UserFacade from '../src/facades/userFacadeWithDB';
 import { expect } from "chai";
 import { bryptAsync } from "../src/utils/bcrypt-async-helper"
-import { ApiError } from '../src/errors/apiError';
+import { MongoMemoryServer } from "mongodb-memory-server"
+import getDbConnection from "../src/config/setupDB";
+const testConnection = getDbConnection({
+  testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } })
+})
+
 
 let userCollection: mongo.Collection | null;
-let client: mongo.MongoClient;
 
 describe("########## Verify the UserFacade with a DataBase ##########", () => {
 
   before(async function () {
-    //Change mocha's default timeout, since we are using a "slow" remote database for testing
-    this.timeout(Number(process.env["MOCHA_TIMEOUT"]));
-    client = await getConnectedClient();
-    process.env["DB_NAME"] = "semester_case_test"
-    await UserFacade.initDB(client)
-    userCollection = await client.db(process.env["DB_NAME"]).collection("users");
+    const db = await testConnection.getDB();
+    await UserFacade.initDB(db)
+    userCollection = db.collection("users");
   })
 
   after(async () => {
-    //await closeConnection();
+    await testConnection.stop()
   })
 
   beforeEach(async () => {

@@ -5,28 +5,18 @@ const debug = require("debug")("user-endpoint");
 const router = express.Router();
 import { ApiError } from "../errors/apiError"
 import authMiddleware from "../middlewares/basic-auth";
-import * as mongo from "mongodb"
-import { getConnectedClient } from "../config/setupDB";
-const MongoClient = mongo.MongoClient;
+import app from "../app";
 
 const USE_AUTHENTICATION = !process.env["SKIP_AUTHENTICATION"];
 
-let dbInitialized = false;
 
-(async function initDb() {
-  const client = await getConnectedClient();
-  await userFacade.initDB(client);
-  dbInitialized = true
-})()
-
-router.use((req, res, next) => {
-  if (dbInitialized) {
-    return next()
+let facadeInitialized = false;
+router.use(async (req, res, next) => {
+  if (!facadeInitialized) {
+    const db = await app.get("database");
+    await userFacade.initDB(db);
   }
-  return res.json({ "info": "DB not ready, try again" })
-  // const err = new ApiError("Database not ready", 500);
-  // next(err)
-
+  next()
 })
 
 router.post('/', async function (req, res, next) {
