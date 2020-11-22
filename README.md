@@ -48,7 +48,7 @@ const db = app.get("database");
 *The examples given above will use the connection details given in `.env`*
 
 The example below, shows how to change that to use an in-memory database.
-You can still pass in the app object, as in the previous example if needes.
+You can still pass in the app object, as in the previous example if needed.
 
 ```js
 import { MongoMemoryServer } from "mongodb-memory-server"
