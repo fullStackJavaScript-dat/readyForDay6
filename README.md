@@ -52,8 +52,8 @@ You can still pass in the app object, as in the previous example if needed.
 
 ```js
 import { MongoMemoryServer } from "mongodb-memory-server"
-import getDbConnection from "../src/config/setupDB";
-const testConnection = getDbConnection({
+import setupDB from "../src/config/setupDB";
+const testConnection = setupDB({
   testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } })
 })
 ```    
