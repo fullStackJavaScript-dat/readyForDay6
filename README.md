@@ -22,34 +22,38 @@ MOCHA_TIMEOUT=5000
 
 # How to get and use a database connection
 ### Simple
+```js
+import setupDB from "../config/setupDB"
+const connection = setupDB();
 
-    import setupDB from "../config/setupDB"
-    const connection = setupDB();
-    
-    ...
-    const db = await connection.getDB()
-    .....
-    await connection.close()
-
+...
+const db = await connection.getDB()
+.....
+await connection.close()
+```
 
 ### Passing the Express app object, will provide access to the database everywhere
-    import app from "../app";
-    import setupDB from "../config/setupDB"
+
+```js
+import app from "../app";
+import setupDB from "../config/setupDB"
     
-    connection = await setupDB({ app });
+connection = await setupDB({ app });
 
-    // Somewhere else
-    import app from "../app";
-    const db = app.get("database");
-
+// Somewhere else
+import app from "../app";
+const db = app.get("database");
+```
 ### Using an in-memory database for testing
 *The examples given above will use the connection details given in `.env`*
 
 The example below, shows how to change that to use an in-memory database.
 You can still pass in the app object, as in the previous example if needes.
 
-    import { MongoMemoryServer } from "mongodb-memory-server"
-    import getDbConnection from "../src/config/setupDB";
-    const testConnection = getDbConnection({
-      testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } })
-    })
+```js
+import { MongoMemoryServer } from "mongodb-memory-server"
+import getDbConnection from "../src/config/setupDB";
+const testConnection = getDbConnection({
+  testServer: new MongoMemoryServer({ instance: { dbName: process.env.TEST_DB_NAME } })
+})
+```    
